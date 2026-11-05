@@ -1,0 +1,29 @@
+{
+  "videos_dir": "..",
+  "name": "Nombre Apellido",
+  "accent": "B8F000",
+  "language": "es",
+  "hq_model": "medium",
+  "cam": {"x": 1123, "y": 572, "size": 148},
+  "clips": [
+    {
+      "id": "08_hospital",
+      "source": "modulo3.mp4",
+      "parts": [["11:17.6", "12:28.0"]],
+      "title": "El modelo aprendió a reconocer el hospital",
+      "hook": ["La IA que detectaba cáncer…", "reconocía el hospital"],
+      "formats": ["vertical", "horizontal"],
+      "fixes": [["escuria.", "espuria."], ["Jay", "Ye"]]
+    },
+    {
+      "id": "12_doctorado",
+      "source": "modulo5.mp4",
+      "parts": [["00:42.7", "01:36.4"], ["04:25.8", "04:55.6"]],
+      "title": "Un test de los años 40, hecho con el mouse",
+      "hook": ["Un test de 1940…", "ahora con el mouse"],
+      "formats": ["horizontal"],
+      "subtitles": true,
+      "cam": {"x": 1133, "y": 573, "size": 147}
+    }
+  ]
+}
