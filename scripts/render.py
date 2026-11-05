@@ -64,17 +64,31 @@ def chunks(words):
     return out
 
 
-def layout(src_w, src_h, cam):
+CAM_ZOOM = 2.7      # default upscale of the recorded cam (148 px -> 400 px looked good; more gets soft)
+CAM_MAX = 460       # largest cam that fits the layout
+CAM_SMALL = 300     # below this, warn: the recorded cam is small, ask the user (smaller+sharp vs bigger+soft)
+
+
+def cam_display(cam, c):
+    """Displayed cam diameter: explicit cam_display, else recorded size x cam_zoom, capped at CAM_MAX."""
+    fixed = c.get("cam_display", P.get("cam_display"))
+    if fixed: return int(fixed)
+    zoom = float(c.get("cam_zoom", P.get("cam_zoom", CAM_ZOOM)))
+    return int(min(CAM_MAX, round(int(cam["size"]) * zoom)))
+
+
+def layout(src_w, src_h, cam, size):
     sh = int(round(1080 * src_h / src_w / 2) * 2)
     top = 330
     sb = top + sh
     L = {"slide_h": sh, "slide_y": top, "cap_y": sb + 100}
     if cam:
-        cam_y = sb + 352
-        size = int(min(460, 1920 - 150 - cam_y))
-        L.update(cam_y=cam_y, cam_size=size - size % 2, name_y=cam_y + size + 50)
+        cam_y = L["cap_y"] + 135                      # ~75 px gap under the caption line
+        size = int(min(size, 1920 - 230 - cam_y))     # keep cam + name above the bottom zone covered by app UI
+        size -= size % 2
+        L.update(cam_y=cam_y, cam_size=size, name_y=cam_y + size + 50)
     else:
-        L.update(cap_y=sb + 170, name_y=1920 - 160)
+        L.update(cap_y=sb + 170, name_y=1920 - 300)
     return L
 
 
@@ -132,7 +146,13 @@ def vertical(cid, c, words):
     dur = duration(src)
     sw, sh_ = [int(v) for v in probe(src, "stream=width,height", "v:0").split(",")[:2]]
     cam = c.get("cam", P.get("cam"))
-    L = layout(sw, sh_, cam)
+    L = layout(sw, sh_, cam, cam_display(cam, c) if cam else 0)
+    if cam:
+        zoom = L["cam_size"] / int(cam["size"])
+        print(f"{cid}: cámara {cam['size']} px -> {L['cam_size']} px (x{zoom:.1f})")
+        if L["cam_size"] < CAM_SMALL:
+            print(f"  AVISO: la cámara grabada es chica; queda de {L['cam_size']} px. Preguntar si prefiere más grande "
+                  f"(\"cam_zoom\": 3.2, se ve más borrosa) o así.")
 
     hook = c.get("hook") or [c.get("title", ""), ""]
     hsize = lambda t: int(min(70, 70 * 26 / max(len(t), 1)))
@@ -167,7 +187,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         R = C + 12
         fc += (f"[0:v]split[a][b];"
                f"[a]drawbox=x={bx}:y={by}:w={bw}:h={bh}:color=white:t=fill,scale=1080:{L['slide_h']}[slide];"
-               f"[b]crop={s}:{s}:{x}:{y},scale={C}:{C}:flags=lanczos,unsharp=5:5:0.6,format=rgba[c0];"
+               # deblock + light denoise before upscaling, so compression blocks aren't magnified
+               f"[b]crop={s}:{s}:{x}:{y},deblock=filter=strong:block=8,hqdn3d=1.5:1.5:6:6,"
+               f"scale={C}:{C}:flags=lanczos,unsharp=5:5:0.8,format=rgba[c0];"
                f"[1:v]format=gray[m];[c0][m]alphamerge[cam];"
                f"color=c=0x{P.get('accent','B8F000').lstrip('#')}:s={R}x{R}:r=30:d={dur:.3f},format=rgba[r0];"
                f"[2:v]scale={R}:{R},format=gray[m2];[r0][m2]alphamerge[ring];"

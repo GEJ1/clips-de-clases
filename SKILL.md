@@ -31,6 +31,8 @@ Work inside the folder with the videos. Create `clips/project.json` (see `refere
 - `name`: shown under the facecam in vertical clips (ask the user how they want to appear; omit to hide).
 - `accent`: hex colour for highlighted word / hook line / cam ring. Suggest the brand colour you see in the slides.
 - `cam`: facecam square in source pixels, or `null` if there is no facecam (see step 4). Per-clip override allowed.
+- Displayed cam size (vertical) is **relative to the recorded cam**: `size × cam_zoom` (default 2.7, capped at 460 px).
+  A 148 px cam → 400 px. Override with `"cam_zoom": 3.0` or a fixed `"cam_display": 420` (project or per clip).
 
 Layout: `clips/work/` (transcripts, temp), `clips/previews/`, `clips/vertical/`, `clips/horizontal/`.
 
@@ -75,7 +77,9 @@ python3 SKILL_DIR/scripts/frame.py crop  <video> 300 X Y SIZE clips/work/cam.png
 python3 SKILL_DIR/scripts/frame.py sheet <video> X Y SIZE clips/work/sheet.png    # 10/50/90 % — does it move?
 ```
 Check **every source video used** — the cam can differ between recordings (or move mid-video). Use a per-clip `cam`
-override when it does. Note: the small cam is upscaled ~3×, so it will look a bit soft; mention it once.
+override when it does. The cam is upscaled ~2.7× by default, so it will look a bit soft; mention it once.
+If the recorded cam is small (< ~110 px, displayed < 300 px), `render.py` prints an AVISO: ask the user whether they
+prefer it smaller and sharper, or bigger (`cam_zoom` 3–3.2) and softer.
 
 ## 5. Previews → user picks
 
@@ -116,7 +120,9 @@ python3 SKILL_DIR/scripts/render.py --project clips --format both 08_hospital   
 Horizontal: `"subtitles": false` in a clip renders it without captions.
 **Verify**: every line ends in `OK`; extract one frame per clip and look at it
 (`ffmpeg -ss 20 -i clips/vertical/X_vertical.mp4 -frames:v 1 -vf scale=540:-1 frame.png`): hook fits, captions don't
-overlap the slide or cam, the small original cam is hidden, nothing is cut off. You cannot hear audio — ask the user to
+overlap the slide or cam, the small original cam is hidden, nothing is cut off.
+**After the first vertical clip, send it (or a frame) and ask the user if the cam size looks right**; adjust
+`cam_zoom`/`cam_display` for the project before rendering the rest. You cannot hear audio — ask the user to
 confirm it sounds right.
 
 ## 8. Post text

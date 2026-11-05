@@ -12,6 +12,9 @@ filters=$(ffmpeg -hide_banner -filters 2>/dev/null || true)
 if command -v ffmpeg >/dev/null && ! grep -q " ass " <<<"$filters"; then
   echo "FALTA: ffmpeg sin libass (no puede quemar subtítulos)"; ok=0
 fi
+for f in deblock hqdn3d alimiter afftdn; do
+  grep -q " $f " <<<"$filters" || { echo "FALTA: filtro $f de ffmpeg (actualizar ffmpeg a >= 4.2)"; ok=0; }
+done
 
 PY=""
 for c in python3.12 python3.11 python3.10 python3.9 python3; do
